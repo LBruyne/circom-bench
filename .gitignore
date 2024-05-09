@@ -1,0 +1,9 @@
+node_modules
+
+*.ptau
+
+test_poseidon/**/*.sym
+test_poseidon/**/*.r1cs
+test_poseidon/**/*.json
+test_poseidon/**/poseidon_16_1_cpp/
+test_poseidon/**/poseidon_16_1_js/
