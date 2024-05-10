@@ -7,3 +7,7 @@ test_poseidon/**/*.r1cs
 test_poseidon/**/*.json
 test_poseidon/**/poseidon_16_1_cpp/
 test_poseidon/**/poseidon_16_1_js/
+test_poseidon/**/*.wtns
+test_poseidon/**/*.zkey
+
+!test_poseidon/input.json

@@ -3,9 +3,6 @@
 hash_times=(3 10 30 100 150 200 230 250) 
 test_times=(10 10 10 4 4 4 4 4)
 
-# hash_times=(300 600)
-# test_times=(2 2)
-
 if [ "${#hash_times[@]}" -ne "${#test_times[@]}" ]; then
     echo "Error: The length of hash_times and test_times arrays must be the same."
     exit 1

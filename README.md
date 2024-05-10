@@ -1,17 +1,21 @@
 # Circom Benchmark
 
-Benchmark circom with Poseidon hashing function.
+Benchmark circom and snarkjs with Poseidon hashing function.
 The maximum number of constraints to bench is 4M.
 
 ## Benchmark
 
 ### In Server
+
+Setting:
 - Circom version: 2.1.9
 - Ubuntu 22.04 AMD x86_64 
 - CPU: Intel(R) Xeon(R) E-2288G @ 3.70GHz 
 - CPU cores: 8
+- Threads: 16
 - Memory: 128G
 
+Note: SnarkJS does enable multi-thread optimization.
 
 
 ### In PC
@@ -52,5 +56,10 @@ Now switch to ``nodejs`` and run the benchmark script,
 
 ``` sh
 # (./test_poseidon)
+# This benchmark 3-250 Poseidon hash (with maximum 1000000 constraints)
 bash ./bench.sh
+
+# (./test_poseidon)
+# This benchmark 300-1000 Poseidon hash (with maximum 4000000 constraints)
+bash ./bench_2.sh
 ```
