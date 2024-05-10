@@ -1,11 +1,10 @@
 const snarkjs = require('snarkjs');
 const { performance } = require('perf_hooks');
-import { open } from 'fs/promises';
 
 async function poseidon_test (hash_mode, hash_times, test_times) {
     const r1cs_file = `./${hash_times}/poseidon_${hash_mode}_1.r1cs`
     const wasm_file = `./${hash_times}/poseidon_${hash_mode}_1_js/poseidon_${hash_mode}_1.wasm`
-    const ptau_file = "../pot20.ptau"
+    const ptau_file = "../pot22.ptau"
     // const prove_key = "./circuit.zkey"
     const input = {
         "inputs": Array.from({ length: hash_mode }, (_, index) => index + 1)

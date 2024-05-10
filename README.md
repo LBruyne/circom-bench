@@ -17,10 +17,15 @@ Setting:
 
 Note: SnarkJS does enable multi-thread optimization.
 
-
 ### In PC
 
-- 
+Setting:
+- Circom version 2.1.2
+- MacOS Sonoma 14.3.1
+- CPU: Apple M1 Pro
+- CPU cores: 10
+- Threads: 10
+- Memory: 16G
 
 ## Usages
 
