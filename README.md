@@ -5,7 +5,7 @@ The maximum number of constraints to bench is 4M.
 
 ## Benchmark
 
-### In Server
+### In Server \#1
 
 Setting:
 - Circom version: 2.1.9
@@ -17,6 +17,17 @@ Setting:
 - Memory: 128G
 
 Note: SnarkJS does enable multi-thread optimization.
+
+### In Server \#2
+
+Setting:
+- Circom version 2.1.9
+- SnarkJS version 0.7.4
+- Ubuntu 22.04 AMD x86_64 
+- CPU: Intel(R) Xeon(R) Gold 6462C @ ? GHz
+- CPU cores: 32
+- Threads: 64
+- Memory: 252G
 
 ### In PC
 
