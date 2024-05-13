@@ -9,6 +9,7 @@ The maximum number of constraints to bench is 4M.
 
 Setting:
 - Circom version: 2.1.9
+- SnarkJS version 0.7.4
 - Ubuntu 22.04 AMD x86_64 
 - CPU: Intel(R) Xeon(R) E-2288G @ 3.70GHz 
 - CPU cores: 8
@@ -21,6 +22,7 @@ Note: SnarkJS does enable multi-thread optimization.
 
 Setting:
 - Circom version 2.1.2
+- SnarkJS version 0.7.4
 - MacOS Sonoma 14.3.1
 - CPU: Apple M1 Pro
 - CPU cores: 10
@@ -29,7 +31,7 @@ Setting:
 
 ## Usages
 
-Install cicrom (refer to the official website) and snarkjs:
+Install circom (refer to the official website) and snarkjs:
 
 ``` sh
 npm install -g snarkjs
@@ -55,16 +57,16 @@ wget https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_22.ptau -
 cd ./test_poseidon
 ```
 
-The downloading may be time costing. To run a simple benchmark, just modify the website url to adjust the number of tau smaller (e.g., 16). However, this  restricts the maximum number of constraints we can bench.
+The downloading may be time-costing. To run a simple benchmark, just modify the website url to adjust the number of tau smaller (e.g., 16). However, this restricts the maximum number of constraints we can bench.
 
 Now switch to ``nodejs`` and run the benchmark script,
 
 ``` sh
 # (./test_poseidon)
-# This benchmark 3-250 Poseidon hash (with maximum 1000000 constraints)
-bash ./bench.sh
+# Prepare circuits
+bash ./prepare.sh
 
 # (./test_poseidon)
-# This benchmark 300-1000 Poseidon hash (with maximum 4000000 constraints)
-bash ./bench_2.sh
+# This benchmark 3-1000 Poseidon hash (with maximum 4000000 constraints)
+bash ./bench.sh
 ```
