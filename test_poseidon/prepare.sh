@@ -1,6 +1,7 @@
 #!/bin/bash
 
-hash_times=(3 10 30 100 150 200 230 250 300 600 900 1000)
+#hash_times=(3 10 30 100 150 200 230 250 300 600 900 1000)
+hash_times=(1000)
 
 for folder in "${hash_times[@]}"; do
     cd "$folder" || exit
