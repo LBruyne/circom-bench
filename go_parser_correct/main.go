@@ -5,28 +5,36 @@ import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
-	"time"
-
 	"github.com/consensys/gnark/frontend"
+	"go_parser_correct/utils"
 	"os"
 	"runtime"
+	"time"
 )
 
 func main() {
 	runtime.GOMAXPROCS(4)
 	dir, _ := os.Getwd()
+	startRead := time.Now()
 	fmt.Println("working directory: ", dir)
 	ccs, err := ReadR1CS("r1cs")
+	durationRead := time.Since(startRead)
+	fmt.Printf("Read time: %v\n", durationRead)
 	if err != nil {
 		panic(err)
 	}
 	a, b, c := ccs.GetNbVariables()
 	fmt.Println(a, b, c)
 	var w R1CSCircuit
-	w.Witness = make([]frontend.Variable, 3692017)
-	for i := 0; i < len(w.Witness); i++ {
-		w.Witness[i] = frontend.Variable(0)
+	w.Witness, err = utils.ParseWtns("./output.wtns")
+	if err != nil {
+		panic(err)
 	}
+	//w.Witness = make([]frontend.Variable, 11093)
+	//for i := 0; i < len(w.Witness); i++ {
+	//	w.Witness[i] = frontend.Variable(0)
+	//}
+
 	//scs := ccs.(*cs.SparseR1CS)
 	//srs, srsLagrange, err := unsafekzg.NewSRS(scs)
 	//if err != nil {
@@ -51,14 +59,13 @@ func main() {
 	//if err != nil {
 	//	log.Fatal(err)
 	//}
-
+	//
 	//err = plonk.Verify(proof, vk, witnessPublic)
 	//if err != nil {
 	//	log.Fatal(err)
 	//}
 
 	//
-
 	secretWitness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
 	if err != nil {
 		panic(err)
@@ -90,4 +97,5 @@ func main() {
 	fmt.Printf("Verify time: %v\n", durationVerify)
 
 	//似乎原版是plonkcommitments因此groth16不行
+
 }
