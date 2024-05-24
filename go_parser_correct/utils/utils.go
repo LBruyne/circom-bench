@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/consensys/gnark/frontend"
 	"io/ioutil"
+	"math/big"
 )
 
 type R1CSCircuit struct {
@@ -45,28 +46,28 @@ func ParseWtns(filePath string) ([]frontend.Variable, error) {
 		return nil, fmt.Errorf("invalid file format")
 	}
 
-	version := binary.LittleEndian.Uint32(fileContent[4:8])
-	fmt.Println("Version:", version)
-
-	sections := binary.LittleEndian.Uint32(fileContent[8:12])
-	fmt.Println("Number of sections:", sections)
-
-	idSection1 := binary.LittleEndian.Uint32(fileContent[12:16])
-	fmt.Println("ID Section 1:", idSection1)
-
-	idSection1Length := binary.LittleEndian.Uint32(fileContent[16:20])
-	fmt.Println("ID Section 1 Length (first 32 bits):", idSection1Length)
-
-	idSection1LengthHigh := binary.LittleEndian.Uint32(fileContent[20:24])
-	fmt.Println("ID Section 1 Length (last 32 bits):", idSection1LengthHigh)
-
-	n32 := binary.LittleEndian.Uint32(fileContent[24:28])
-	fmt.Println("n32:", n32)
+	//version := binary.LittleEndian.Uint32(fileContent[4:8])
+	//fmt.Println("Version:", version)
+	//
+	//sections := binary.LittleEndian.Uint32(fileContent[8:12])
+	//fmt.Println("Number of sections:", sections)
+	//
+	//idSection1 := binary.LittleEndian.Uint32(fileContent[12:16])
+	//fmt.Println("ID Section 1:", idSection1)
+	//
+	//idSection1Length := binary.LittleEndian.Uint32(fileContent[16:20])
+	//fmt.Println("ID Section 1 Length (first 32 bits):", idSection1Length)
+	//
+	//idSection1LengthHigh := binary.LittleEndian.Uint32(fileContent[20:24])
+	//fmt.Println("ID Section 1 Length (last 32 bits):", idSection1LengthHigh)
+	//
+	//n32 := binary.LittleEndian.Uint32(fileContent[24:28])
+	//fmt.Println("n32:", n32)
 
 	rawPrimeStart := 28
 	rawPrimeEnd := rawPrimeStart + int(8)*4
-	rawPrime := fileContent[rawPrimeStart:rawPrimeEnd]
-	fmt.Println("Raw Prime:", rawPrime)
+	//rawPrime := fileContent[rawPrimeStart:rawPrimeEnd]
+	//fmt.Println("Raw Prime:", rawPrime)
 
 	witnessSize := binary.LittleEndian.Uint32(fileContent[rawPrimeEnd : rawPrimeEnd+4])
 	fmt.Println("Witness Size:", witnessSize)
@@ -74,14 +75,14 @@ func ParseWtns(filePath string) ([]frontend.Variable, error) {
 	witnesses := make([]frontend.Variable, witnessSize)
 
 	idSection2Start := rawPrimeEnd + 4
-	idSection2 := binary.LittleEndian.Uint32(fileContent[idSection2Start : idSection2Start+4])
-	fmt.Println("ID Section 2:", idSection2)
-
-	idSection2Length := binary.LittleEndian.Uint32(fileContent[idSection2Start+4 : idSection2Start+8])
-	fmt.Println("ID Section 2 Length (first 32 bits):", idSection2Length)
-
-	idSection2LengthHigh := binary.LittleEndian.Uint32(fileContent[idSection2Start+8 : idSection2Start+12])
-	fmt.Println("ID Section 2 Length (last 32 bits):", idSection2LengthHigh)
+	//idSection2 := binary.LittleEndian.Uint32(fileContent[idSection2Start : idSection2Start+4])
+	//fmt.Println("ID Section 2:", idSection2)
+	//
+	//idSection2Length := binary.LittleEndian.Uint32(fileContent[idSection2Start+4 : idSection2Start+8])
+	//fmt.Println("ID Section 2 Length (first 32 bits):", idSection2Length)
+	//
+	//idSection2LengthHigh := binary.LittleEndian.Uint32(fileContent[idSection2Start+8 : idSection2Start+12])
+	//fmt.Println("ID Section 2 Length (last 32 bits):", idSection2LengthHigh)
 
 	witnessDataStart := idSection2Start + 12
 	witnessDataLength := int(8 * 4)
@@ -90,10 +91,18 @@ func ParseWtns(filePath string) ([]frontend.Variable, error) {
 		witnessEnd := witnessStart + witnessDataLength
 		witness := fileContent[witnessStart:witnessEnd]
 		//witnesses[i] = new(big.Int).SetBytes(witness)
-		witnesses[i] = witness
+		witness = convertLittleEndianToBigEndian(witness)
+		witnesses[i] = new(big.Int).SetBytes(witness)
 	}
 
 	return witnesses, nil
+}
+
+func convertLittleEndianToBigEndian(data []byte) []byte {
+	for i := 0; i < len(data)/2; i++ {
+		data[i], data[len(data)-1-i] = data[len(data)-1-i], data[i]
+	}
+	return data
 }
 
 //func main() {
