@@ -12,7 +12,7 @@ async function witness_generator () {
     console.log(`Start generating witness for ${r1cs_file} circuit using ${input_file} as client inputs, with the aid of ${wasm_file} WASM file.`);
 
     // Load input
-    console.log("Load {input_file}.");
+    console.log(`Load ${input_file}.`);
     start = performance.now();
     const input = JSON.parse(fs.readFileSync(input_file, 'utf8'))
     duration = performance.now() - start;
