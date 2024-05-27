@@ -10,6 +10,15 @@ test_poseidon/**/poseidon_16_1_js/
 test_poseidon/**/*.wtns
 test_poseidon/**/*.zkey
 
+js_witness/**/*.sym
+js_witness/**/*.r1cs
+js_witness/**/*.json
+js_witness/**/main_cpp/
+js_witness/**/main_js/
+js_witness/**/*.wtns
+js_witness/**/*.zkey
+
 !test_poseidon/input.json
+!js_witness/input.json
 
 **/**/.DS_Store

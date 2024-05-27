@@ -1,0 +1,15 @@
+{
+  "name": "js_witness",
+  "version": "1.0.0",
+  "description": "## Usage",
+  "main": "witness_generator.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "snarkjs": "^0.7.4"
+  }
+}
