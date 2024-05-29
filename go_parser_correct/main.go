@@ -12,13 +12,15 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"time"
 )
 
 func main() {
-	main1()
+	//main1()
 	//main2()
+	RunGenerateWnts()
 	main3()
 }
 
@@ -56,6 +58,26 @@ func main1() {
 	//}
 }
 
+func RunGenerateWnts() {
+
+	scriptPath, err := filepath.Abs("../js_witness/witness_generator.js")
+	if err != nil {
+		panic(err)
+	}
+	scriptDir := filepath.Dir(scriptPath)
+
+	// 创建 exec.Command 并设置工作目录
+	cmd := exec.Command("node", scriptPath)
+	cmd.Dir = scriptDir
+	//cmd := exec.Command("node", "../test_poseidon/generate_witness.js", "../test_poseidon/poseidon_16_1.wasm", "../test_poseidon/input.json", "./utils/output.wtns")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+		return
+	}
+	fmt.Printf("Output: %s\n", output)
+}
+
 //func generateWitness(a int) {
 //
 //	cmd := exec.Command("node", "../test_poseidon/generate_witness.js", "../test_poseidon/poseidon_16_1.wasm", "../test_poseidon/input.json", "./utils/output.wtns")
@@ -74,7 +96,8 @@ func main2() {
 	dir, _ := os.Getwd()
 	startRead := time.Now()
 	fmt.Println("working directory: ", dir)
-	ccs, err := ReadR1CS("r1cs")
+	//ccs, err := ReadR1CS("r1cs")
+	ccs, err := ReadR1CS("../js_witness/main_c.r1cs")
 	durationRead := time.Since(startRead)
 	fmt.Printf("Read time: %v\n", durationRead)
 	if err != nil {
@@ -85,7 +108,8 @@ func main2() {
 	var w R1CSCircuit
 	startParse := time.Now()
 	//w.Witness, err = utils.ParseWtns("./output.wtns")
-	w.Witness, err = utils.ParseWtns("./utils/output.wtns")
+	//w.Witness, err = utils.ParseWtns("./utils/output.wtns")
+	w.Witness, err = utils.ParseWtns("../js_witness/main_c.wtns")
 	durationParse := time.Since(startParse)
 	fmt.Printf("Parse time: %v\n", durationParse)
 	if err != nil {
@@ -183,7 +207,7 @@ func main3() {
 	dir, _ := os.Getwd()
 	startRead := time.Now()
 	fmt.Println("working directory: ", dir)
-	ccs, err := ReadR1CS("r1cs_300")
+	ccs, err := ReadR1CS("../js_witness/main_c.r1cs")
 	durationRead := time.Since(startRead)
 	fmt.Printf("Read time: %v\n", durationRead)
 	if err != nil {
@@ -192,7 +216,7 @@ func main3() {
 	a, b, c := ccs.GetNbVariables()
 	fmt.Println(a, b, c)
 	var w R1CSCircuit
-	w.Witness, err = utils.ParseWtns("./utils/output.wtns")
+	w.Witness, err = utils.ParseWtns("../js_witness/main_c.wtns")
 	if err != nil {
 		panic(err)
 	}
