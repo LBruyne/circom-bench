@@ -20,8 +20,9 @@ import (
 func main() {
 	//main1()
 	//main2()
-	RunGenerateWnts()
-	main3()
+	//RunGenerateWnts()
+	//main3()
+	testFunction("../js_witness/main_c.r1cs", "../js_witness/main_c.wtns", 5)
 }
 
 func main1() {
@@ -279,7 +280,83 @@ func main3() {
 	durationProve := time.Since(startProve)
 	fmt.Printf("Prove time: %v\n", durationProve)
 	startVerify := time.Now()
-	_ = groth16.Verify(proof, vk, witnessPublic)
+	err = groth16.Verify(proof, vk, witnessPublic)
 	durationVerify := time.Since(startVerify)
 	fmt.Printf("Verify time: %v\n", durationVerify)
+
+	dataproof, err := json.Marshal(proof)
+	if err != nil {
+		fmt.Println("Error serializing:", err)
+		return
+	}
+	err = ioutil.WriteFile("proof.json", dataproof, 0644)
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+		return
+	}
+
+	dataFromProof, err := ioutil.ReadFile("proof.json")
+	if err != nil {
+		fmt.Println("Error reading from file:", err)
+		return
+	}
+	var deserializedProof *groth16_bn254.Proof
+	err = json.Unmarshal(dataFromProof, &deserializedProof)
+	if err != nil {
+		fmt.Println("Error deserializing:", err)
+		return
+	}
+	err = groth16.Verify(deserializedProof, vk, witnessPublic)
+
+}
+
+func testFunction(r1cs_path string, wtns_path string, prove_cycles int) {
+
+	startRead := time.Now()
+	ccs, err := ReadR1CS(r1cs_path)
+	durationRead := time.Since(startRead)
+	fmt.Printf("Read time: %v\n", durationRead)
+	if err != nil {
+		panic(err)
+	}
+	var w R1CSCircuit
+	w.Witness, err = utils.ParseWtns(wtns_path)
+	if err != nil {
+		panic(err)
+	}
+	secretWitness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
+	if err != nil {
+		panic(err)
+	}
+	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
+	if err != nil {
+		panic(err)
+	}
+	startSetup := time.Now()
+	pk, vk, err := groth16.Setup(ccs)
+	if err != nil {
+		panic(err)
+	}
+	durationSetup := time.Since(startSetup)
+	fmt.Printf("Setup time: %v\n", durationSetup)
+
+	totalTime := 0
+	for i := 0; i < prove_cycles; i++ {
+		fmt.Printf("——————————prove time %v ——————————\n", i)
+		startProve := time.Now()
+		proof, err := groth16.Prove(ccs, pk, secretWitness, backend.WithIcicleAcceleration())
+		if err != nil {
+			panic(err)
+		}
+		durationProve := time.Since(startProve)
+		fmt.Printf("Prove time: %v\n", durationProve)
+		startVerify := time.Now()
+		err = groth16.Verify(proof, vk, witnessPublic)
+		durationVerify := time.Since(startVerify)
+		fmt.Printf("Verify time: %v\n", durationVerify)
+		fmt.Printf("—————————————————————————————————\n", i)
+		totalTime += int(durationProve)
+	}
+	fmt.Printf("Average prove time : %v", totalTime/prove_cycles)
+
 }
