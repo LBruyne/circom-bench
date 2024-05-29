@@ -6,7 +6,25 @@
 npm install
 ```
 
+## Examples
+
+There are many examples with different circuit size:
+
+- **sudoku:** Prove knowledge of a solution to some Sudoku puzzle.
+- **rollup:** Prove validity of a rollup transaction.
+- **poseidon-16:** Prove validity of 16 Poseidon Hash functions.
+- **eth_addr:** Prove knowledge of a private key corresponding to an Ethereum address.
+- **ecdsa_verify:** Prove that a ECDSA verification ran properly on a provided signature and message.
+
 ## Usage
+
+Run all examples and calculate witness (`.wtns`):
+
+``` sh
+bash run.sh
+```
+
+## Procedure
 
 Suppose `main.circom` is the circuit for a specified user application.
 

@@ -1,6 +1,6 @@
-pragma circom 2.0.0;
+pragma circom 2.0.2;
 
-include "./poseidon.circom";
+include "./node_modules/circomlib/circuits/poseidon.circom";
 
 template TestPoseidon() {
     var nInputs = 16;
