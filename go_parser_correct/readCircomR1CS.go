@@ -7,6 +7,7 @@ import (
 	"github.com/dreamATD/pianist-gnark/frontend/compiled"
 	"io/ioutil"
 	"math/big"
+	"time"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
@@ -117,6 +118,7 @@ func ReadR1CS(filename string) (constraint.ConstraintSystem, error) {
 	//Read the circom R1CS file
 
 	//Map file to byte array
+	startRead := time.Now()
 	file, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -147,26 +149,30 @@ func ReadR1CS(filename string) (constraint.ConstraintSystem, error) {
 		s.size = int(hl)
 		sections[ht] = s
 		ptr += int(hl)
-		fmt.Println("Section", ht, "size", hl, "offset", s.offset)
+		//fmt.Println("Section", ht, "size", hl, "offset", s.offset)
 	}
 
 	// Header section
 	s := sections[1]
 	ptr = s.offset
 	n8, ptr = readUint32(file, ptr)
-	fmt.Println("n8", n8)
+	//fmt.Println("n8", n8)
 	prime, ptr := readBigInt(file, n8, ptr)
 	// check bn254
 	bn254Prime, _ := new(big.Int).SetString("21888242871839275222246405745257275088548364400416034343698204186575808495617", 10)
 	if prime.Cmp(bn254Prime) != 0 {
 		return nil, fmt.Errorf("invalid prime")
 	}
-	fmt.Println(file[ptr], file[ptr+1], file[ptr+2], file[ptr+3])
+	//fmt.Println(file[ptr], file[ptr+1], file[ptr+2], file[ptr+3])
 	nVars, ptr := readUint32(file, ptr)
-	nOutputs, ptr := readUint32(file, ptr)
-	nPubIntputs, ptr := readUint32(file, ptr)
-	nPriInputs, ptr := readUint32(file, ptr)
-	nLabels, ptr := readUint64(file, ptr)
+	//nOutputs, ptr := readUint32(file, ptr)
+	//nPubIntputs, ptr := readUint32(file, ptr)
+	//nPriInputs, ptr := readUint32(file, ptr)
+	//nLabels, ptr := readUint64(file, ptr)
+	_, ptr = readUint32(file, ptr)
+	_, ptr = readUint32(file, ptr)
+	_, ptr = readUint32(file, ptr)
+	_, ptr = readUint64(file, ptr)
 	nConstraints, ptr := readUint32(file, ptr)
 	if s.offset+s.size != ptr {
 		return nil, fmt.Errorf("invalid header section size")
@@ -176,7 +182,7 @@ func ReadR1CS(filename string) (constraint.ConstraintSystem, error) {
 	circuit := R1CSCircuit{}
 	circuit.Constraints = make([]compiled.R1C, nConstraints)
 	circuit.Witness = make([]frontend.Variable, nVars)
-	fmt.Println("Header info: ", nVars, nOutputs, nPubIntputs, nPriInputs, nLabels, nConstraints)
+	//fmt.Println("Header info: ", nVars, nOutputs, nPubIntputs, nPriInputs, nLabels, nConstraints)
 
 	s = sections[2]
 	ptr = s.offset
@@ -199,11 +205,16 @@ func ReadR1CS(filename string) (constraint.ConstraintSystem, error) {
 	if s.offset+s.size != ptr {
 		return nil, fmt.Errorf("invalid header section size")
 	}
-
+	durationRead := time.Since(startRead)
+	fmt.Printf("Read time: %v\n", durationRead)
 	//Section 3: load witness
 
 	//Section 4: build circuit
-	ccs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
+	//ccs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
+	startCompile := time.Now()
+	ccs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit)
+	duration := time.Since(startCompile)
+	fmt.Printf("compile time %v\n", duration)
 
 	return ccs, err
 }

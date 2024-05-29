@@ -1,73 +1,42 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
 	groth16_bn254 "github.com/consensys/gnark/backend/groth16/bn254"
+	bn254_system "github.com/consensys/gnark/constraint/bn254"
 	"github.com/consensys/gnark/frontend"
 	"go_parser_correct/utils"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
+	"reflect"
 	"time"
 )
 
 func main() {
-	//main1()
-	//main2()
+	//If u want to generate witness with witness_generator , u can use the function;before u use it
+	//u should finish the prerequisites for js_witness in readme ↓↓↓↓
 	//RunGenerateWnts()
-	//main3()
-	testFunction("../js_witness/main_c.r1cs", "../js_witness/main_c.wtns", 5)
-}
 
-func main1() {
+	//U can run the function Example to to complete the proof process ↓↓↓↓ （这个函数目前存在问题，无法加载读取保存的json r1cs，有待解决）
+	Example()
 
-	baseDir := "../test_poseidon"
-	subDir := "300"
-	jsFile := "poseidon_16_1_js/generate_witness.js"
-	wasmFile := "poseidon_16_1_js/poseidon_16_1.wasm"
-	inputFile := "../test_poseidon/input.json"
-	outputFile := "./utils/output.wtns"
-
-	// 构建文件路径
-	jsFilePath := fmt.Sprintf("%s/%s/%s", baseDir, subDir, jsFile)
-	wasmFilePath := fmt.Sprintf("%s/%s/%s", baseDir, subDir, wasmFile)
-
-	// 构建命令
-	cmd := exec.Command("node", jsFilePath, wasmFilePath, inputFile, outputFile)
-	//cmd := exec.Command("node", "../test_poseidon/generate_witness.js", "../test_poseidon/poseidon_16_1.wasm", "../test_poseidon/input.json", "./utils/output.wtns")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		fmt.Printf("Error: %s\n", err)
-		return
-	}
-	fmt.Printf("Output: %s\n", output)
-	//filePath := "./utils/output.wtns"
-	//witnesses, err := utils.ParseWtns(filePath)
-	//if err != nil {
-	//	fmt.Println("Error:", err)
-	//	return
-	//}
-	//
-	//for i, witness := range witnesses {
-	//	fmt.Printf("Witness %d: %v\n", i, witness)
-	//}
+	// U can perform multiple rounds of testing using this function for one prove mission ↓↓↓↓
+	//testFunction("../js_witness/main_c.r1cs", "../js_witness/main_c.wtns", 5)
 }
 
 func RunGenerateWnts() {
-
 	scriptPath, err := filepath.Abs("../js_witness/witness_generator.js")
 	if err != nil {
 		panic(err)
 	}
 	scriptDir := filepath.Dir(scriptPath)
-
-	// 创建 exec.Command 并设置工作目录
 	cmd := exec.Command("node", scriptPath)
 	cmd.Dir = scriptDir
 	//cmd := exec.Command("node", "../test_poseidon/generate_witness.js", "../test_poseidon/poseidon_16_1.wasm", "../test_poseidon/input.json", "./utils/output.wtns")
@@ -78,45 +47,22 @@ func RunGenerateWnts() {
 	}
 	fmt.Printf("Output: %s\n", output)
 }
-
-//func generateWitness(a int) {
-//
-//	cmd := exec.Command("node", "../test_poseidon/generate_witness.js", "../test_poseidon/poseidon_16_1.wasm", "../test_poseidon/input.json", "./utils/output.wtns")
-//	output, err := cmd.CombinedOutput()
-//	if err != nil {
-//		fmt.Printf("Error: %s\n", err)
-//		return
-//	}
-//	fmt.Printf("Output: %s\n", output)
-//}
-
-// 安装参数保存读取的测试版本
-func main2() {
-
-	runtime.GOMAXPROCS(4)
-	dir, _ := os.Getwd()
+func Example() {
 	startRead := time.Now()
-	fmt.Println("working directory: ", dir)
-	//ccs, err := ReadR1CS("r1cs")
-	ccs, err := ReadR1CS("../js_witness/main_c.r1cs")
+	r1cs, err := ReadR1CS("../js_witness/main_c.r1cs")
 	durationRead := time.Since(startRead)
 	fmt.Printf("Read time: %v\n", durationRead)
 	if err != nil {
 		panic(err)
 	}
-	a, b, c := ccs.GetNbVariables()
-	fmt.Println(a, b, c)
 	var w R1CSCircuit
 	startParse := time.Now()
-	//w.Witness, err = utils.ParseWtns("./output.wtns")
-	//w.Witness, err = utils.ParseWtns("./utils/output.wtns")
 	w.Witness, err = utils.ParseWtns("../js_witness/main_c.wtns")
 	durationParse := time.Since(startParse)
 	fmt.Printf("Parse time: %v\n", durationParse)
 	if err != nil {
 		panic(err)
 	}
-
 	secretWitness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
 	if err != nil {
 		panic(err)
@@ -126,196 +72,76 @@ func main2() {
 		panic(err)
 	}
 	startSetup := time.Now()
-	//pk, vk, err := groth16.Setup(ccs)
-	_, _, err = groth16.Setup(ccs)
+	pk, vk, err := groth16.Setup(r1cs)
 	if err != nil {
 		panic(err)
 	}
 	durationSetup := time.Since(startSetup)
 	fmt.Printf("Setup time: %v\n", durationSetup)
-	//存储的Pk
-	//data, err := json.Marshal(pk)
-	//if err != nil {
-	//	fmt.Println("Error serializing:", err)
-	//	return
-	//}
-	//err = ioutil.WriteFile("Pk.json", data, 0644)
-	//if err != nil {
-	//	fmt.Println("Error writing to file:", err)
-	//	return
-	//}
-	ReadJsonTime := time.Now()
-	dataFromFile, err := ioutil.ReadFile("Pk.json")
+	SaveTime := time.Now()
+	err = SaveToJSON("Pk.json", pk)
+	err = SaveToJSON("Vk.json", vk)
+	var buffer bytes.Buffer
+	r1cs.WriteTo(&buffer)
+	err = ioutil.WriteFile("r1cs_data.bin", buffer.Bytes(), 0644)
 	if err != nil {
-		fmt.Println("Error reading from file:", err)
+		fmt.Println("Error writing buffer to file:", err)
 		return
 	}
-	var deserializedPK *groth16_bn254.ProvingKey
-	err = json.Unmarshal(dataFromFile, &deserializedPK)
+
+	data, err := ioutil.ReadFile("r1cs_data.bin")
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
+	buffer = *bytes.NewBuffer(data)
+	var reconstructedR1cs bn254_system.R1CS
+	_, err = reconstructedR1cs.ReadFrom(&buffer)
+	if err != nil {
+		panic(err)
+	}
+	durationSave := time.Since(SaveTime)
+	fmt.Printf("Save Pk Vk R1cs time: %v\n", durationSave)
+	var deserializedPK groth16_bn254.ProvingKey
+	var deserializedVK groth16_bn254.VerifyingKey
+	var deserializedProof groth16_bn254.Proof
+	ReadJsonTime := time.Now()
+	err = LoadFromJSON("Pk.json", &deserializedPK)
 	if err != nil {
 		fmt.Println("Error deserializing:", err)
 		return
 	}
 	durationReadJson := time.Since((ReadJsonTime))
 	fmt.Printf("ReadPKJson time: %v\n", durationReadJson)
-	// 存储的Vk
-	//dataVk, err := json.Marshal(vk)
-	//if err != nil {
-	//	fmt.Println("Error serializing:", err)
-	//	return
-	//}
-	//err = ioutil.WriteFile("Vk.json", dataVk, 0644)
-	//if err != nil {
-	//	fmt.Println("Error writing to file:", err)
-	//	return
-	//}
 	ReadJsonTime = time.Now()
-	dataFromFile, err = ioutil.ReadFile("Vk.json")
+	err = LoadFromJSON("Vk.json", &deserializedVK)
 	if err != nil {
 		fmt.Println("Error reading from file:", err)
 		return
 	}
-	var deserializedVK *groth16_bn254.VerifyingKey
-	err = json.Unmarshal(dataFromFile, &deserializedVK)
-	if err != nil {
-		fmt.Println("Error deserializing:", err)
-		return
-	}
-	durationReadJson = time.Since((ReadJsonTime))
-	fmt.Printf("ReadVKJson time: %v\n", durationReadJson)
-
-	//↑↑↑↑↑↑↑↑↑————————————————数据加载——————————————————↑↑↑↑↑↑↑↑↑
-
 	startProve := time.Now()
-	//proof, err := groth16.Prove(ccs, pk, secretWitness)
-	proof, err := groth16.Prove(ccs, deserializedPK, secretWitness, backend.WithIcicleAcceleration())
+	proof, err := groth16.Prove(&reconstructedR1cs, &deserializedPK, secretWitness, backend.WithIcicleAcceleration())
+	err = SaveToJSON("proof.json", proof)
+	if err != nil {
+		panic(err)
+	}
+	err = LoadFromJSON("proof.json", &deserializedProof)
+	if err != nil {
+		panic(err)
+	}
 	if err != nil {
 		panic(err)
 	}
 	durationProve := time.Since(startProve)
 	fmt.Printf("Prove time: %v\n", durationProve)
 	startVerify := time.Now()
-	_ = groth16.Verify(proof, deserializedVK, witnessPublic)
+	_ = groth16.Verify(&deserializedProof, &deserializedVK, witnessPublic)
 	durationVerify := time.Since(startVerify)
 	fmt.Printf("Verify time: %v\n", durationVerify)
-
-}
-
-// 原始版本的测试
-func main3() {
-
-	runtime.GOMAXPROCS(4)
-	dir, _ := os.Getwd()
-	startRead := time.Now()
-	fmt.Println("working directory: ", dir)
-	ccs, err := ReadR1CS("../js_witness/main_c.r1cs")
-	durationRead := time.Since(startRead)
-	fmt.Printf("Read time: %v\n", durationRead)
-	if err != nil {
-		panic(err)
-	}
-	a, b, c := ccs.GetNbVariables()
-	fmt.Println(a, b, c)
-	var w R1CSCircuit
-	w.Witness, err = utils.ParseWtns("../js_witness/main_c.wtns")
-	if err != nil {
-		panic(err)
-	}
-	//w.Witness = make([]frontend.Variable, 11093)
-	//for i := 0; i < len(w.Witness); i++ {
-	//	w.Witness[i] = frontend.Variable(0)
-	//}
-
-	//scs := ccs.(*cs.SparseR1CS)
-	//srs, srsLagrange, err := unsafekzg.NewSRS(scs)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//witnessFull, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
-	//if err != nil {
-	//	panic(err)
-	//}
-	//witnessPublic, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
-	//if err != nil {
-	//	panic(err)
-	//}
-	//pk, vk, err := plonk.Setup(ccs, srs, srsLagrange)
-	////_, err := plonk.Setup(r1cs, kate, &publicWitness)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//proof, err := plonk.Prove(ccs, pk, witnessFull)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//
-	//err = plonk.Verify(proof, vk, witnessPublic)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-
-	//
-	secretWitness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
-	if err != nil {
-		panic(err)
-	}
-	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
-	if err != nil {
-		panic(err)
-	}
-	startSetup := time.Now()
-	pk, vk, err := groth16.Setup(ccs)
-	if err != nil {
-		panic(err)
-	}
-	durationSetup := time.Since(startSetup)
-	fmt.Printf("Setup time: %v\n", durationSetup)
-
-	startProve := time.Now()
-	//proof, err := groth16.Prove(ccs, pk, secretWitness)
-	proof, err := groth16.Prove(ccs, pk, secretWitness, backend.WithIcicleAcceleration())
-	if err != nil {
-		panic(err)
-	}
-	durationProve := time.Since(startProve)
-	fmt.Printf("Prove time: %v\n", durationProve)
-	startVerify := time.Now()
-	err = groth16.Verify(proof, vk, witnessPublic)
-	durationVerify := time.Since(startVerify)
-	fmt.Printf("Verify time: %v\n", durationVerify)
-
-	dataproof, err := json.Marshal(proof)
-	if err != nil {
-		fmt.Println("Error serializing:", err)
-		return
-	}
-	err = ioutil.WriteFile("proof.json", dataproof, 0644)
-	if err != nil {
-		fmt.Println("Error writing to file:", err)
-		return
-	}
-
-	dataFromProof, err := ioutil.ReadFile("proof.json")
-	if err != nil {
-		fmt.Println("Error reading from file:", err)
-		return
-	}
-	var deserializedProof *groth16_bn254.Proof
-	err = json.Unmarshal(dataFromProof, &deserializedProof)
-	if err != nil {
-		fmt.Println("Error deserializing:", err)
-		return
-	}
-	err = groth16.Verify(deserializedProof, vk, witnessPublic)
-
 }
 
 func testFunction(r1cs_path string, wtns_path string, prove_cycles int) {
-
-	startRead := time.Now()
 	ccs, err := ReadR1CS(r1cs_path)
-	durationRead := time.Since(startRead)
-	fmt.Printf("Read time: %v\n", durationRead)
 	if err != nil {
 		panic(err)
 	}
@@ -340,9 +166,9 @@ func testFunction(r1cs_path string, wtns_path string, prove_cycles int) {
 	durationSetup := time.Since(startSetup)
 	fmt.Printf("Setup time: %v\n", durationSetup)
 
-	totalTime := 0
+	var totalTime int64
 	for i := 0; i < prove_cycles; i++ {
-		fmt.Printf("——————————prove time %v ——————————\n", i)
+		fmt.Printf("——————————prove time %v ——————————\n", i+1)
 		startProve := time.Now()
 		proof, err := groth16.Prove(ccs, pk, secretWitness, backend.WithIcicleAcceleration())
 		if err != nil {
@@ -354,9 +180,40 @@ func testFunction(r1cs_path string, wtns_path string, prove_cycles int) {
 		err = groth16.Verify(proof, vk, witnessPublic)
 		durationVerify := time.Since(startVerify)
 		fmt.Printf("Verify time: %v\n", durationVerify)
-		fmt.Printf("—————————————————————————————————\n", i)
-		totalTime += int(durationProve)
+		fmt.Printf("—————————————————————————————————\n")
+		totalTime += int64(durationProve)
 	}
-	fmt.Printf("Average prove time : %v", totalTime/prove_cycles)
+	fmt.Printf("Average prove time : %v", time.Duration(totalTime/int64(prove_cycles)))
+}
 
+func SaveToJSON(filePath string, v interface{}) error {
+	jsonData, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(filePath, jsonData, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func LoadFromJSON(filePath string, v interface{}) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	byteValue, err := ioutil.ReadAll(file)
+	if err != nil {
+		return err
+	}
+	rv := reflect.ValueOf(v)
+	if rv.Kind() != reflect.Ptr || rv.IsNil() {
+		return fmt.Errorf("v must be a non-nil pointer")
+	}
+	if err = json.Unmarshal(byteValue, v); err != nil {
+		return err
+	}
+	return nil
 }
