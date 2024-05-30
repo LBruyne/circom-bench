@@ -25,9 +25,24 @@ func main() {
 	//RunGenerateWnts()
 
 	//U can run the function Example to to complete the proof process ↓↓↓↓ （这个函数目前存在问题，无法加载读取保存的json r1cs，有待解决）
-	Example()
+	//Example()
 
 	// U can perform multiple rounds of testing using this function for one prove mission ↓↓↓↓
+	// —— For multi files
+	//basePath := "../js_witness/"
+	//fileNames := []string{"rollup", "sudoku", "poseidon_16", "eth_addr", "ecdsa_verify"}
+	//for _, fileName := range fileNames {
+	//	fmt.Println("\nTest [", fileName, "]")
+	//	testFunction(filepath.Join(basePath, fileName+".r1cs"), filepath.Join(basePath, fileName+".wtns"), 5)
+	//}
+
+	testFunction("../js_witness/sudoku.r1cs", "../js_witness/sudoku.wtns", 5)
+	testFunction("../js_witness/rollup.r1cs", "../js_witness/rollup.wtns", 5)
+	testFunction("../js_witness/eth_addr.r1cs", "../js_witness/eth_addr.wtns", 5)
+	testFunction("../js_witness/ecdsa_verify.r1cs", "../js_witness/ecdsa_verify.wtns", 5)
+	testFunction("../js_witness/poseidon_16.r1cs", "../js_witness/poseidon_16.wtns", 5)
+
+	// —— For single file
 	//testFunction("../js_witness/main_c.r1cs", "../js_witness/main_c.wtns", 5)
 }
 
@@ -170,7 +185,7 @@ func testFunction(r1cs_path string, wtns_path string, prove_cycles int) {
 	for i := 0; i < prove_cycles; i++ {
 		fmt.Printf("——————————prove time %v ——————————\n", i+1)
 		startProve := time.Now()
-		proof, err := groth16.Prove(ccs, pk, secretWitness, backend.WithIcicleAcceleration())
+		proof, err := groth16.Prove(ccs, pk, secretWitness)
 		if err != nil {
 			panic(err)
 		}
@@ -183,7 +198,7 @@ func testFunction(r1cs_path string, wtns_path string, prove_cycles int) {
 		fmt.Printf("—————————————————————————————————\n")
 		totalTime += int64(durationProve)
 	}
-	fmt.Printf("Average prove time : %v", time.Duration(totalTime/int64(prove_cycles)))
+	fmt.Printf("Average prove time : %v\n", time.Duration(totalTime/int64(prove_cycles)))
 }
 
 func SaveToJSON(filePath string, v interface{}) error {
