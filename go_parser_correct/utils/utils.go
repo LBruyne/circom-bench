@@ -8,10 +8,6 @@ import (
 	"math/big"
 )
 
-type R1CSCircuit struct {
-	Witness []frontend.Variable
-}
-
 //func generateWitnessAndParse(wasmFile, inputFile, outputWitnessFile string) (*R1CSCircuit, error) {
 //	// 执行Node.js脚本生成witness
 //	cmd := exec.Command("node", "generate_witness.js", wasmFile, inputFile, outputWitnessFile)
@@ -36,14 +32,14 @@ type R1CSCircuit struct {
 //	return &circuit, nil
 //}
 
-func ParseWtns(filePath string) ([]frontend.Variable, error) {
+func ParseWtns(filePath string, NumOutput uint32, NumInPublic uint32) ([]frontend.Variable, []frontend.Variable, error) {
 	fileContent, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("error reading file: %v", err)
+		return nil, nil, fmt.Errorf("error reading file: %v", err)
 	}
 
 	if string(fileContent[:4]) != "wtns" {
-		return nil, fmt.Errorf("invalid file format")
+		return nil, nil, fmt.Errorf("invalid file format")
 	}
 
 	//version := binary.LittleEndian.Uint32(fileContent[4:8])
@@ -72,7 +68,8 @@ func ParseWtns(filePath string) ([]frontend.Variable, error) {
 	witnessSize := binary.LittleEndian.Uint32(fileContent[rawPrimeEnd : rawPrimeEnd+4])
 	fmt.Println("Witness Size:", witnessSize)
 
-	witnesses := make([]frontend.Variable, witnessSize)
+	witnesses := make([]frontend.Variable, 0, witnessSize-NumInPublic)
+	witnessesPublic := make([]frontend.Variable, NumInPublic)
 
 	idSection2Start := rawPrimeEnd + 4
 	//idSection2 := binary.LittleEndian.Uint32(fileContent[idSection2Start : idSection2Start+4])
@@ -92,10 +89,17 @@ func ParseWtns(filePath string) ([]frontend.Variable, error) {
 		witness := fileContent[witnessStart:witnessEnd]
 		//witnesses[i] = new(big.Int).SetBytes(witness)
 		witness = convertLittleEndianToBigEndian(witness)
-		witnesses[i] = new(big.Int).SetBytes(witness)
+		bigIntWitness := new(big.Int).SetBytes(witness)
+
+		if i >= NumOutput+1 && i < NumOutput+1+NumInPublic {
+			witnessesPublic[i-(NumOutput+1)] = bigIntWitness
+			fmt.Printf("%d\n", bigIntWitness)
+		} else {
+			witnesses = append(witnesses, bigIntWitness)
+		}
 	}
 
-	return witnesses, nil
+	return witnesses, witnessesPublic, nil
 }
 
 func convertLittleEndianToBigEndian(data []byte) []byte {

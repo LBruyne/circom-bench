@@ -26,8 +26,9 @@ type Section struct {
 }
 
 type R1CSCircuit struct {
-	Witness     []frontend.Variable
-	Constraints []compiled.R1C
+	Witness       []frontend.Variable
+	WitnessPublic []frontend.Variable `gnark:",public"`
+	Constraints   []compiled.R1C
 }
 
 func readBigInt(data []byte, size uint32, offset int) (*big.Int, int) {
@@ -44,6 +45,9 @@ var (
 	CoeffArr  []*big.Int
 	coefCount uint32
 	Labels    []uint64
+)
+var (
+	NumOutput, NumInPublic uint32
 )
 
 func readLC(data []byte, offset int) (compiled.LinearExpression, int) {
@@ -73,7 +77,7 @@ func readR1C(data []byte, offset int) (compiled.R1C, int) {
 	return r, offset
 }
 
-func SumConstraint(api frontend.API, lc compiled.LinearExpression, wit []frontend.Variable) frontend.Variable {
+func SumConstraint(api frontend.API, lc compiled.LinearExpression, wit []frontend.Variable, witPublic []frontend.Variable) frontend.Variable {
 	var sum frontend.Variable
 	var lcTermArray []compiled.Term
 	lcTermArray = lc
@@ -83,7 +87,14 @@ func SumConstraint(api frontend.API, lc compiled.LinearExpression, wit []fronten
 		term := lc[i]
 		coefID := term.CoeffID()
 		wireID := term.WireID()
-		neededVariables[i] = wit[wireID]
+		if wireID >= 1+int(NumOutput) && wireID < 1+int(NumOutput)+len(witPublic) {
+			neededVariables[i] = witPublic[wireID-1-int(NumOutput)]
+		} else if wireID < 1+int(NumOutput) {
+			neededVariables[i] = wit[wireID]
+		} else {
+			neededVariables[i] = wit[wireID-len(witPublic)]
+		}
+		//neededVariables[i] = wit[wireID]
 		coefs[i] = CoeffArr[coefID]
 		neededVariables[i] = api.Mul(neededVariables[i], coefs[i])
 	}
@@ -106,22 +117,22 @@ func SumConstraint(api frontend.API, lc compiled.LinearExpression, wit []fronten
 func (c *R1CSCircuit) Define(api frontend.API) error {
 	for i := 0; i < len(c.Constraints); i++ {
 		r := c.Constraints[i]
-		a := SumConstraint(api, r.L, c.Witness)
-		b := SumConstraint(api, r.R, c.Witness)
-		c := SumConstraint(api, r.O, c.Witness)
+		a := SumConstraint(api, r.L, c.Witness, c.WitnessPublic)
+		b := SumConstraint(api, r.R, c.Witness, c.WitnessPublic)
+		c := SumConstraint(api, r.O, c.Witness, c.WitnessPublic)
 		api.AssertIsEqual(api.Mul(a, b), c)
 	}
 	return nil
 }
 
-func ReadR1CS(filename string) (constraint.ConstraintSystem, error) {
+func ReadR1CS(filename string) (constraint.ConstraintSystem, uint32, uint32, error) {
 	//Read the circom R1CS file
 
 	//Map file to byte array
 	startRead := time.Now()
 	file, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 
 	// Load constraints
@@ -130,7 +141,7 @@ func ReadR1CS(filename string) (constraint.ConstraintSystem, error) {
 	ptr := 0
 	headerString := string(file[ptr : ptr+4])
 	if headerString != "r1cs" {
-		return nil, fmt.Errorf("invalid header type")
+		return nil, 0, 0, fmt.Errorf("invalid header type")
 	}
 	version, ptr := readUint32(file, ptr+4)
 	//ignore version
@@ -161,28 +172,31 @@ func ReadR1CS(filename string) (constraint.ConstraintSystem, error) {
 	// check bn254
 	bn254Prime, _ := new(big.Int).SetString("21888242871839275222246405745257275088548364400416034343698204186575808495617", 10)
 	if prime.Cmp(bn254Prime) != 0 {
-		return nil, fmt.Errorf("invalid prime")
+		return nil, 0, 0, fmt.Errorf("invalid prime")
 	}
-	//fmt.Println(file[ptr], file[ptr+1], file[ptr+2], file[ptr+3])
+	fmt.Println(file[ptr], file[ptr+1], file[ptr+2], file[ptr+3])
 	nVars, ptr := readUint32(file, ptr)
-	//nOutputs, ptr := readUint32(file, ptr)
-	//nPubIntputs, ptr := readUint32(file, ptr)
-	//nPriInputs, ptr := readUint32(file, ptr)
-	//nLabels, ptr := readUint64(file, ptr)
-	_, ptr = readUint32(file, ptr)
-	_, ptr = readUint32(file, ptr)
-	_, ptr = readUint32(file, ptr)
-	_, ptr = readUint64(file, ptr)
+	nOutputs, ptr := readUint32(file, ptr)
+	nPubIntputs, ptr := readUint32(file, ptr)
+	nPriInputs, ptr := readUint32(file, ptr)
+	nLabels, ptr := readUint64(file, ptr)
+	//_, ptr = readUint32(file, ptr)
+	//_, ptr = readUint32(file, ptr)
+	//_, ptr = readUint32(file, ptr)
+	//_, ptr = readUint64(file, ptr)
 	nConstraints, ptr := readUint32(file, ptr)
 	if s.offset+s.size != ptr {
-		return nil, fmt.Errorf("invalid header section size")
+		return nil, 0, 0, fmt.Errorf("invalid header section size")
 	}
+	NumOutput = nOutputs
+	NumInPublic = nPubIntputs
 
 	// Section 2: load constraints and labels
 	circuit := R1CSCircuit{}
 	circuit.Constraints = make([]compiled.R1C, nConstraints)
-	circuit.Witness = make([]frontend.Variable, nVars)
-	//fmt.Println("Header info: ", nVars, nOutputs, nPubIntputs, nPriInputs, nLabels, nConstraints)
+	circuit.Witness = make([]frontend.Variable, nVars-nPubIntputs)
+	circuit.WitnessPublic = make([]frontend.Variable, nPubIntputs)
+	fmt.Println("Header info: ", nVars, nOutputs, nPubIntputs, nPriInputs, nLabels, nConstraints)
 
 	s = sections[2]
 	ptr = s.offset
@@ -193,7 +207,7 @@ func ReadR1CS(filename string) (constraint.ConstraintSystem, error) {
 		circuit.Constraints[i] = singleConstraint
 	}
 	if s.offset+s.size != ptr {
-		return nil, fmt.Errorf("invalid header section size")
+		return nil, 0, 0, fmt.Errorf("invalid header section size")
 	}
 
 	s = sections[3]
@@ -203,7 +217,7 @@ func ReadR1CS(filename string) (constraint.ConstraintSystem, error) {
 		Labels[i], ptr = readUint64(file, ptr)
 	}
 	if s.offset+s.size != ptr {
-		return nil, fmt.Errorf("invalid header section size")
+		return nil, 0, 0, fmt.Errorf("invalid header section size")
 	}
 	durationRead := time.Since(startRead)
 	fmt.Printf("Read time: %v\n", durationRead)
@@ -216,5 +230,5 @@ func ReadR1CS(filename string) (constraint.ConstraintSystem, error) {
 	duration := time.Since(startCompile)
 	fmt.Printf("compile time %v\n", duration)
 
-	return ccs, err
+	return ccs, nOutputs, nPubIntputs, err
 }
