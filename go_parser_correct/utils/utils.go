@@ -68,8 +68,8 @@ func ParseWtns(filePath string, NumOutput uint32, NumInPublic uint32) ([]fronten
 	witnessSize := binary.LittleEndian.Uint32(fileContent[rawPrimeEnd : rawPrimeEnd+4])
 	fmt.Println("Witness Size:", witnessSize)
 
-	witnesses := make([]frontend.Variable, 0, witnessSize-NumInPublic)
-	witnessesPublic := make([]frontend.Variable, NumInPublic)
+	witnesses := make([]frontend.Variable, 0, witnessSize-NumInPublic-NumOutput)
+	witnessesPublic := make([]frontend.Variable, NumInPublic+NumOutput)
 
 	idSection2Start := rawPrimeEnd + 4
 	//idSection2 := binary.LittleEndian.Uint32(fileContent[idSection2Start : idSection2Start+4])
@@ -91,8 +91,8 @@ func ParseWtns(filePath string, NumOutput uint32, NumInPublic uint32) ([]fronten
 		witness = convertLittleEndianToBigEndian(witness)
 		bigIntWitness := new(big.Int).SetBytes(witness)
 
-		if i >= NumOutput+1 && i < NumOutput+1+NumInPublic {
-			witnessesPublic[i-(NumOutput+1)] = bigIntWitness
+		if i >= 1 && i < NumOutput+1+NumInPublic {
+			witnessesPublic[i-1] = bigIntWitness
 			fmt.Printf("%d\n", bigIntWitness)
 		} else {
 			witnesses = append(witnesses, bigIntWitness)

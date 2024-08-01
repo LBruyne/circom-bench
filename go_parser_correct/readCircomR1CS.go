@@ -87,9 +87,9 @@ func SumConstraint(api frontend.API, lc compiled.LinearExpression, wit []fronten
 		term := lc[i]
 		coefID := term.CoeffID()
 		wireID := term.WireID()
-		if wireID >= 1+int(NumOutput) && wireID < 1+int(NumOutput)+len(witPublic) {
-			neededVariables[i] = witPublic[wireID-1-int(NumOutput)]
-		} else if wireID < 1+int(NumOutput) {
+		if wireID >= 1 && wireID < 1+len(witPublic) {
+			neededVariables[i] = witPublic[wireID-1]
+		} else if wireID < 1 {
 			neededVariables[i] = wit[wireID]
 		} else {
 			neededVariables[i] = wit[wireID-len(witPublic)]
@@ -194,8 +194,8 @@ func ReadR1CS(filename string) (constraint.ConstraintSystem, uint32, uint32, err
 	// Section 2: load constraints and labels
 	circuit := R1CSCircuit{}
 	circuit.Constraints = make([]compiled.R1C, nConstraints)
-	circuit.Witness = make([]frontend.Variable, nVars-nPubIntputs)
-	circuit.WitnessPublic = make([]frontend.Variable, nPubIntputs)
+	circuit.Witness = make([]frontend.Variable, nVars-nPubIntputs-nOutputs)
+	circuit.WitnessPublic = make([]frontend.Variable, nPubIntputs+nOutputs)
 	fmt.Println("Header info: ", nVars, nOutputs, nPubIntputs, nPriInputs, nLabels, nConstraints)
 
 	s = sections[2]
