@@ -94,6 +94,7 @@ func ParseWtns(filePath string, NumOutput uint32, NumInPublic uint32) ([]fronten
 		if i >= 1 && i < NumOutput+1+NumInPublic {
 			witnessesPublic[i-1] = bigIntWitness
 			fmt.Printf("%d\n", bigIntWitness)
+			//↑用于观测具体的witness是否输入outpu和publicinput
 		} else {
 			witnesses = append(witnesses, bigIntWitness)
 		}

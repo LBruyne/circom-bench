@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -97,7 +98,9 @@ func main() {
 	//testFunction("../js_witness/ecdsa_verify.r1cs", "../js_witness/ecdsa_verify.wtns", 5)
 	//testFunction("../test_poseidon/10/poseidon_16_1.r1cs", "../js_witness/poseidon_16.wtns", 1)
 	//RunProve("../test_poseidon/10/poseidon_12_20.r1cs", "../test_poseidon/10/poseidon_12_20_js/output.wtns")
-	RunProve("./ZKLogin.r1cs", "./witness.wtns")
+	RunProve("./ZKLogin.r1cs", "./witness2.wtns")
+	//RunProve("./poseidon_16_1.r1cs", "./output3.wtns")
+	//RunProve("./poseidon_16.r1cs", "./poseidon_16_2.wtns")
 	//RunProve_2("../test_poseidon/10/poseidon_16_1.r1cs", "../test_poseidon/10/poseidon_16_1_js/output3.wtns", "../test_poseidon/10/poseidon_16_1_js/output2.wtns")
 	//RunProve("../js_witness/rollup.r1cs", "../js_witness/rollup.wtns")
 	//Example()
@@ -281,17 +284,6 @@ func RunProve(r1cs_path string, wtns_path string) {
 		panic(err)
 	}
 
-	//compare
-	//var w2 R1CSCircuit
-	//w2.Witness = w.Witness
-	//w2.WitnessPublic = make([]frontend.Variable, len(w.WitnessPublic))
-	//copy(w2.WitnessPublic, w.WitnessPublic)
-	//w2.WitnessPublic[5] = big.NewInt(250)
-	//witnessPublic2, err := frontend.NewWitness(&w2, ecc.BN254.ScalarField(), frontend.PublicOnly())
-	//if err != nil {
-	//	panic(err)
-	//}
-
 	secretWitness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
 	if err != nil {
 		panic(err)
@@ -301,10 +293,51 @@ func RunProve(r1cs_path string, wtns_path string) {
 		panic(err)
 	}
 	startSetup := time.Now()
-	pk, vk, err := groth16.Setup(ccs)
+	////这里选择是否存储pk vk
+	//pk, vk, err := groth16.Setup(ccs)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//dataDir := "./key"
+	//os.MkdirAll(dataDir, 0755)
+	//vkFile, err := os.Create(dataDir + "/" + "vk.key")
+	//if err != nil {
+	//	panic(err)
+	//}
+	//defer vkFile.Close()
+	//_, err = vk.WriteRawTo(vkFile)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//pkFile, err := os.Create(dataDir + "/" + "pk.key")
+	//if err != nil {
+	//	panic(err)
+	//}
+	//defer pkFile.Close()
+	//_, err = pk.WriteRawTo(pkFile)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//这里选择是否复用已经存储的对应的pk vk 作证明
+	dataDir := "./key"
+	pkFile, err := os.Open(dataDir + "/" + "pk.key")
 	if err != nil {
 		panic(err)
 	}
+	pk := groth16.NewProvingKey(ecc.BN254)
+	bufReader := bufio.NewReaderSize(pkFile, 1024*1024)
+	pk.UnsafeReadFrom(bufReader)
+	defer pkFile.Close()
+	vkFile, err := os.Open(dataDir + "/" + "vk.key")
+
+	vk := groth16.NewVerifyingKey(ecc.BN254)
+	vk.ReadFrom(vkFile)
+	defer vkFile.Close()
+
+	if err != nil {
+		panic(err)
+	}
+	//——————————————————————
 	durationSetup := time.Since(startSetup)
 	fmt.Printf("Setup time: %v\n", durationSetup)
 
@@ -340,14 +373,14 @@ func RunProve(r1cs_path string, wtns_path string) {
 	//	panic(err)
 	//}
 	durationVerify := time.Since(startVerify)
-	f, err := os.Create("verifier.sol")
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-	if err := vk.ExportSolidity(f); err != nil {
-		panic(err)
-	}
+	//f, err := os.Create("Zklogin.sol")
+	//if err != nil {
+	//	panic(err)
+	//}
+	//defer f.Close()
+	//if err := vk.ExportSolidity(f); err != nil {
+	//	panic(err)
+	//}
 	fmt.Printf("Verify time: %v\n", durationVerify)
 	fmt.Printf("—————————————————————————————————\n")
 	totalTime += int64(durationProve)
