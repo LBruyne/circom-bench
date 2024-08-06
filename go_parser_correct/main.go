@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -98,8 +97,8 @@ func main() {
 	//testFunction("../js_witness/ecdsa_verify.r1cs", "../js_witness/ecdsa_verify.wtns", 5)
 	//testFunction("../test_poseidon/10/poseidon_16_1.r1cs", "../js_witness/poseidon_16.wtns", 1)
 	//RunProve("../test_poseidon/10/poseidon_12_20.r1cs", "../test_poseidon/10/poseidon_12_20_js/output.wtns")
-	RunProve("./ZKLogin.r1cs", "./witness2.wtns")
-	//RunProve("./poseidon_16_1.r1cs", "./output3.wtns")
+	//RunProve("./ZKLogin.r1cs", "./witness2.wtns")  this one is right
+	RunProve("./poseidon_16_1.r1cs", "./output3.wtns")
 	//RunProve("./poseidon_16.r1cs", "./poseidon_16_2.wtns")
 	//RunProve_2("../test_poseidon/10/poseidon_16_1.r1cs", "../test_poseidon/10/poseidon_16_1_js/output3.wtns", "../test_poseidon/10/poseidon_16_1_js/output2.wtns")
 	//RunProve("../js_witness/rollup.r1cs", "../js_witness/rollup.wtns")
@@ -107,178 +106,12 @@ func main() {
 	// —— For single file
 	//testFunction("../js_witness/main_c.r1cs", "../js_witness/main_c.wtns", 5)
 }
-
-//	func RunGenerateWnts() {
-//		scriptPath, err := filepath.Abs("../js_witness/witness_generator.js")
-//		if err != nil {
-//			panic(err)
-//		}
-//		scriptDir := filepath.Dir(scriptPath)
-//		cmd := exec.Command("node", scriptPath)
-//		cmd.Dir = scriptDir
-//		//cmd := exec.Command("node", "../test_poseidon/generate_witness.js", "../test_poseidon/poseidon_16_1.wasm", "../test_poseidon/input.json", "./utils/output.wtns")
-//		output, err := cmd.CombinedOutput()
-//		if err != nil {
-//			fmt.Printf("Error: %s\n", err)
-//			return
-//		}
-//		fmt.Printf("Output: %s\n", output)
-//	}
-//
-//	func Example() {
-//		startRead := time.Now()
-//		r1cs, err := ReadR1CS("../js_witness/main_c.r1cs")
-//		durationRead := time.Since(startRead)
-//		fmt.Printf("Read time: %v\n", durationRead)
-//		if err != nil {
-//			panic(err)
-//		}
-//		var w R1CSCircuit
-//		startParse := time.Now()
-//		w.Witness, err = utils.ParseWtns("../js_witness/main_c.wtns")
-//		durationParse := time.Since(startParse)
-//		fmt.Printf("Parse time: %v\n", durationParse)
-//		if err != nil {
-//			panic(err)
-//		}
-//		secretWitness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
-//		if err != nil {
-//			panic(err)
-//		}
-//		witnessPublic, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
-//		if err != nil {
-//			panic(err)
-//		}
-//		startSetup := time.Now()
-//		pk, vk, err := groth16.Setup(r1cs)
-//		if err != nil {
-//			panic(err)
-//		}
-//		durationSetup := time.Since(startSetup)
-//		fmt.Printf("Setup time: %v\n", durationSetup)
-//		SaveTime := time.Now()
-//		err = SaveToJSON("Pk.json", pk)
-//		err = SaveToJSON("Vk.json", vk)
-//		var buffer bytes.Buffer
-//		r1cs.WriteTo(&buffer)
-//		err = ioutil.WriteFile("r1cs_data.bin", buffer.Bytes(), 0644)
-//		if err != nil {
-//			fmt.Println("Error writing buffer to file:", err)
-//			return
-//		}
-//
-//		data, err := ioutil.ReadFile("r1cs_data.bin")
-//		if err != nil {
-//			fmt.Println("Error reading file:", err)
-//			return
-//		}
-//		buffer = *bytes.NewBuffer(data)
-//		var reconstructedR1cs bn254_system.R1CS
-//		_, err = reconstructedR1cs.ReadFrom(&buffer)
-//		if err != nil {
-//			panic(err)
-//		}
-//		durationSave := time.Since(SaveTime)
-//		fmt.Printf("Save Pk Vk R1cs time: %v\n", durationSave)
-//		var deserializedPK groth16_bn254.ProvingKey
-//		var deserializedVK groth16_bn254.VerifyingKey
-//		var deserializedProof groth16_bn254.Proof
-//		ReadJsonTime := time.Now()
-//		err = LoadFromJSON("Pk.json", &deserializedPK)
-//		if err != nil {
-//			fmt.Println("Error deserializing:", err)
-//			return
-//		}
-//		durationReadJson := time.Since((ReadJsonTime))
-//		fmt.Printf("ReadPKJson time: %v\n", durationReadJson)
-//		ReadJsonTime = time.Now()
-//		err = LoadFromJSON("Vk.json", &deserializedVK)
-//		if err != nil {
-//			fmt.Println("Error reading from file:", err)
-//			return
-//		}
-//		startProve := time.Now()
-//		proof, err := groth16.Prove(&reconstructedR1cs, &deserializedPK, secretWitness, backend.WithIcicleAcceleration())
-//		if p, ok := proof.(*groth16_bn254.Proof); ok {
-//			// 访问字段
-//			fmt.Println("Ar:", p.Ar)
-//			fmt.Println("Krs:", p.Krs)
-//			fmt.Println("Bs:", p.Bs)
-//			fmt.Println("Commitments:", p.Commitments)
-//			fmt.Println("CommitmentPok:", p.CommitmentPok)
-//		} else {
-//			fmt.Println("类型断言失败")
-//		}
-//		err = SaveToJSON("proof.json", proof)
-//		if err != nil {
-//			panic(err)
-//		}
-//		err = LoadFromJSON("proof.json", &deserializedProof)
-//		if err != nil {
-//			panic(err)
-//		}
-//		if err != nil {
-//			panic(err)
-//		}
-//		durationProve := time.Since(startProve)
-//		fmt.Printf("Prove time: %v\n", durationProve)
-//		startVerify := time.Now()
-//		_ = groth16.Verify(&deserializedProof, &deserializedVK, witnessPublic)
-//		durationVerify := time.Since(startVerify)
-//		fmt.Printf("Verify time: %v\n", durationVerify)
-//	}
-//
-//	func testFunction(r1cs_path string, wtns_path string, prove_cycles int) {
-//		ccs, err := ReadR1CS(r1cs_path)
-//		if err != nil {
-//			panic(err)
-//		}
-//		var w R1CSCircuit
-//		w.Witness, err = utils.ParseWtns(wtns_path)
-//		if err != nil {
-//			panic(err)
-//		}
-//		secretWitness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
-//		if err != nil {
-//			panic(err)
-//		}
-//		witnessPublic, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
-//		if err != nil {
-//			panic(err)
-//		}
-//		startSetup := time.Now()
-//		pk, vk, err := groth16.Setup(ccs)
-//		if err != nil {
-//			panic(err)
-//		}
-//		durationSetup := time.Since(startSetup)
-//		fmt.Printf("Setup time: %v\n", durationSetup)
-//
-//		var totalTime int64
-//		for i := 0; i < prove_cycles; i++ {
-//			fmt.Printf("——————————prove time %v ——————————\n", i+1)
-//			startProve := time.Now()
-//			proof, err := groth16.Prove(ccs, pk, secretWitness)
-//			if err != nil {
-//				panic(err)
-//			}
-//			durationProve := time.Since(startProve)
-//			fmt.Printf("Prove time: %v\n", durationProve)
-//			startVerify := time.Now()
-//			err = groth16.Verify(proof, vk, witnessPublic)
-//			durationVerify := time.Since(startVerify)
-//			fmt.Printf("Verify time: %v\n", durationVerify)
-//			fmt.Printf("—————————————————————————————————\n")
-//			totalTime += int64(durationProve)
-//		}
-//		fmt.Printf("Average prove time : %v\n", time.Duration(totalTime/int64(prove_cycles)))
-//	}
 func RunProve(r1cs_path string, wtns_path string) {
-	ccs, NumOutput, NumInPublic, err := ReadR1CS(r1cs_path)
+	ccs, NumOutput, NumInPublic, err := utils.ReadR1CS(r1cs_path)
 	if err != nil {
 		panic(err)
 	}
-	var w R1CSCircuit
+	var w utils.R1CSCircuit
 	w.Witness, w.WitnessPublic, err = utils.ParseWtns(wtns_path, NumOutput, NumInPublic)
 	if err != nil {
 		panic(err)
@@ -294,49 +127,49 @@ func RunProve(r1cs_path string, wtns_path string) {
 	}
 	startSetup := time.Now()
 	////这里选择是否存储pk vk
-	//pk, vk, err := groth16.Setup(ccs)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//dataDir := "./key"
-	//os.MkdirAll(dataDir, 0755)
-	//vkFile, err := os.Create(dataDir + "/" + "vk.key")
-	//if err != nil {
-	//	panic(err)
-	//}
-	//defer vkFile.Close()
-	//_, err = vk.WriteRawTo(vkFile)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//pkFile, err := os.Create(dataDir + "/" + "pk.key")
-	//if err != nil {
-	//	panic(err)
-	//}
-	//defer pkFile.Close()
-	//_, err = pk.WriteRawTo(pkFile)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//这里选择是否复用已经存储的对应的pk vk 作证明
+	pk, vk, err := groth16.Setup(ccs)
+	if err != nil {
+		panic(err)
+	}
 	dataDir := "./key"
-	pkFile, err := os.Open(dataDir + "/" + "pk.key")
+	os.MkdirAll(dataDir, 0755)
+	vkFile, err := os.Create(dataDir + "/" + "vk_poseidon10.key")
 	if err != nil {
 		panic(err)
 	}
-	pk := groth16.NewProvingKey(ecc.BN254)
-	bufReader := bufio.NewReaderSize(pkFile, 1024*1024)
-	pk.UnsafeReadFrom(bufReader)
-	defer pkFile.Close()
-	vkFile, err := os.Open(dataDir + "/" + "vk.key")
-
-	vk := groth16.NewVerifyingKey(ecc.BN254)
-	vk.ReadFrom(vkFile)
 	defer vkFile.Close()
-
+	_, err = vk.WriteRawTo(vkFile)
 	if err != nil {
 		panic(err)
 	}
+	pkFile, err := os.Create(dataDir + "/" + "pk_poseidon10.key")
+	if err != nil {
+		panic(err)
+	}
+	defer pkFile.Close()
+	_, err = pk.WriteRawTo(pkFile)
+	if err != nil {
+		panic(err)
+	}
+	//这里选择是否复用已经存储的对应的pk vk 作证明
+	//dataDir := "./key"
+	//pkFile, err := os.Open(dataDir + "/" + "pk.key")
+	//if err != nil {
+	//	panic(err)
+	//}
+	//pk := groth16.NewProvingKey(ecc.BN254)
+	//bufReader := bufio.NewReaderSize(pkFile, 1024*1024)
+	//pk.UnsafeReadFrom(bufReader)
+	//defer pkFile.Close()
+	//vkFile, err := os.Open(dataDir + "/" + "vk.key")
+	//
+	//vk := groth16.NewVerifyingKey(ecc.BN254)
+	//vk.ReadFrom(vkFile)
+	//defer vkFile.Close()
+	//
+	//if err != nil {
+	//	panic(err)
+	//}
 	//——————————————————————
 	durationSetup := time.Since(startSetup)
 	fmt.Printf("Setup time: %v\n", durationSetup)
@@ -477,11 +310,11 @@ func RunProve(r1cs_path string, wtns_path string) {
 }
 
 func RunProve_2(r1cs_path string, wtns_path string, wtns_path_2 string) {
-	ccs, NumOutput, NumInPublic, err := ReadR1CS(r1cs_path)
+	ccs, NumOutput, NumInPublic, err := utils.ReadR1CS(r1cs_path)
 	if err != nil {
 		panic(err)
 	}
-	var w, w2 R1CSCircuit
+	var w, w2 utils.R1CSCircuit
 	w.Witness, w.WitnessPublic, err = utils.ParseWtns(wtns_path, NumOutput, NumInPublic)
 	if err != nil {
 		panic(err)

@@ -1,0 +1,15 @@
+syntax = "proto3";
+option go_package = "go_parser_correct/grpc/node";
+message Request {
+  string input = 1; //传入input
+  string temp = 2;
+}
+
+message Response {
+  int32 code = 1;   //本次prove是否成功执行 0: 成功执行 / -1: 执行失败
+  repeated string response = 2; //code:0 - 返回output / code:-1 - 失败原因
+}
+
+service Service {
+  rpc prove(Request) returns (Response);
+}

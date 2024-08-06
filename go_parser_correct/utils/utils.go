@@ -2,7 +2,12 @@ package utils
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	fr_bn254 "github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/consensys/gnark/backend/groth16"
+	"github.com/consensys/gnark/backend/witness"
 	"github.com/consensys/gnark/frontend"
 	"io/ioutil"
 	"math/big"
@@ -108,6 +113,65 @@ func convertLittleEndianToBigEndian(data []byte) []byte {
 		data[i], data[len(data)-1-i] = data[len(data)-1-i], data[i]
 	}
 	return data
+}
+func RunProveExportResult(proof groth16.Proof, witnessPublic witness.Witness) []string {
+	_proof, ok := proof.(interface{ MarshalSolidity() []byte })
+	if !ok {
+		panic("proof does not implement MarshalSolidity()")
+	}
+	proofStr := hex.EncodeToString(_proof.MarshalSolidity())
+	bPublicWitness, err := witnessPublic.MarshalBinary()
+	if err != nil {
+		panic(err)
+	}
+	bPublicWitness = bPublicWitness[12:]
+	publicWitnessStr := hex.EncodeToString(bPublicWitness)
+	proofHex := proofStr
+	inputHex := publicWitnessStr
+	nbPublicInputs := len(witnessPublic.Vector().(fr_bn254.Vector))
+	fpSize := 4 * 8
+	proofBytes, err := hex.DecodeString(proofHex)
+	if err != nil {
+		panic(err)
+	}
+	if len(proofBytes) != fpSize*8 {
+		panic("proofBytes != fpSize*8")
+	}
+	inputBytes, err := hex.DecodeString(inputHex)
+	if err != nil {
+		panic(err)
+	}
+	if len(inputBytes)%fr.Bytes != 0 {
+		panic("inputBytes mod fr.Bytes !=0")
+	}
+	nbInputs := len(inputBytes) / fr.Bytes
+	if nbInputs != nbPublicInputs {
+		panic("nbInputs != nbPublicInputs")
+	}
+	input := make([]*big.Int, nbPublicInputs)
+	for i := 0; i < nbInputs; i++ {
+		var e fr.Element
+		e.SetBytes(inputBytes[fr.Bytes*i : fr.Bytes*(i+1)])
+		input[i] = new(big.Int)
+		e.BigInt(input[i])
+	}
+	var __proof [8]*big.Int
+	for i := 0; i < 8; i++ {
+		__proof[i] = new(big.Int).SetBytes(proofBytes[fpSize*i : fpSize*(i+1)])
+	}
+	var finalproof []string
+	var finalinput []string
+	for _, bi := range __proof {
+		finalproof = append(finalproof, bi.String())
+	}
+	for _, bi := range input {
+		finalinput = append(finalinput, bi.String())
+	}
+	fmt.Println(finalproof, "||", finalinput)
+	var result []string
+	result = append(result, finalproof...)
+	result = append(result, finalinput...)
+	return result
 }
 
 //func main() {
