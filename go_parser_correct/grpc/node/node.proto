@@ -2,14 +2,24 @@ syntax = "proto3";
 option go_package = "go_parser_correct/grpc/node";
 message Request {
   string input = 1; //传入input
-  string temp = 2;
+  string temp = 2; //定义模板
 }
 
-message Response {
+message ProveResponse {
   int32 code = 1;   //本次prove是否成功执行 0: 成功执行 / -1: 执行失败
-  repeated string response = 2; //code:0 - 返回output / code:-1 - 失败原因
+  string msg = 2;   //如果执行成功 返回Successfully, 失败的话返回失败原因
+  repeated string proof = 3;    //失败返回空
+}
+
+
+message Prove2CairoResponse {
+  int32 code = 1;   //本次prove是否成功执行 0: 成功执行 / -1: 执行失败
+  string msg = 2;   //如果执行成功 返回Successfully, 失败的话返回失败原因
+  repeated string witness = 3;    //失败返回空
+  repeated string proof = 4;      //失败返回空
 }
 
 service Service {
-  rpc prove(Request) returns (Response);
+  rpc prove(Request) returns (ProveResponse);
+  rpc prove2cairo(Request) returns (Prove2CairoResponse);
 }

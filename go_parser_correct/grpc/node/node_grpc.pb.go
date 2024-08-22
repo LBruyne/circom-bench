@@ -19,14 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Service_Prove_FullMethodName = "/Service/prove"
+	Service_Prove_FullMethodName       = "/Service/prove"
+	Service_Prove2Cairo_FullMethodName = "/Service/prove2cairo"
 )
 
 // ServiceClient is the client API for Service service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ServiceClient interface {
-	Prove(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
+	Prove(ctx context.Context, in *Request, opts ...grpc.CallOption) (*ProveResponse, error)
+	Prove2Cairo(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Prove2CairoResponse, error)
 }
 
 type serviceClient struct {
@@ -37,10 +39,20 @@ func NewServiceClient(cc grpc.ClientConnInterface) ServiceClient {
 	return &serviceClient{cc}
 }
 
-func (c *serviceClient) Prove(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
+func (c *serviceClient) Prove(ctx context.Context, in *Request, opts ...grpc.CallOption) (*ProveResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Response)
+	out := new(ProveResponse)
 	err := c.cc.Invoke(ctx, Service_Prove_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *serviceClient) Prove2Cairo(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Prove2CairoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Prove2CairoResponse)
+	err := c.cc.Invoke(ctx, Service_Prove2Cairo_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +63,8 @@ func (c *serviceClient) Prove(ctx context.Context, in *Request, opts ...grpc.Cal
 // All implementations must embed UnimplementedServiceServer
 // for forward compatibility.
 type ServiceServer interface {
-	Prove(context.Context, *Request) (*Response, error)
+	Prove(context.Context, *Request) (*ProveResponse, error)
+	Prove2Cairo(context.Context, *Request) (*Prove2CairoResponse, error)
 	mustEmbedUnimplementedServiceServer()
 }
 
@@ -62,8 +75,11 @@ type ServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedServiceServer struct{}
 
-func (UnimplementedServiceServer) Prove(context.Context, *Request) (*Response, error) {
+func (UnimplementedServiceServer) Prove(context.Context, *Request) (*ProveResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Prove not implemented")
+}
+func (UnimplementedServiceServer) Prove2Cairo(context.Context, *Request) (*Prove2CairoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Prove2Cairo not implemented")
 }
 func (UnimplementedServiceServer) mustEmbedUnimplementedServiceServer() {}
 func (UnimplementedServiceServer) testEmbeddedByValue()                 {}
@@ -104,6 +120,24 @@ func _Service_Prove_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Service_Prove2Cairo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceServer).Prove2Cairo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Service_Prove2Cairo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceServer).Prove2Cairo(ctx, req.(*Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Service_ServiceDesc is the grpc.ServiceDesc for Service service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +148,10 @@ var Service_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "prove",
 			Handler:    _Service_Prove_Handler,
+		},
+		{
+			MethodName: "prove2cairo",
+			Handler:    _Service_Prove2Cairo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
