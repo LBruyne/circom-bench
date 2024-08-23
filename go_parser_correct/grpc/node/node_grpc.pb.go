@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Service_Prove_FullMethodName       = "/Service/prove"
-	Service_Prove2Cairo_FullMethodName = "/Service/prove2cairo"
+	Service_Prove_FullMethodName       = "/circom_prove.Service/prove"
+	Service_Prove2Cairo_FullMethodName = "/circom_prove.Service/prove2cairo"
 )
 
 // ServiceClient is the client API for Service service.
@@ -142,7 +142,7 @@ func _Service_Prove2Cairo_Handler(srv interface{}, ctx context.Context, dec func
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Service_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Service",
+	ServiceName: "circom_prove.Service",
 	HandlerType: (*ServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

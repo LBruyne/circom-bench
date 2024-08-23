@@ -1,5 +1,6 @@
 syntax = "proto3";
 option go_package = "go_parser_correct/grpc/node";
+package circom_prove;
 message Request {
   string input = 1; //传入input
   string temp = 2; //定义模板
